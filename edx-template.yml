@@ -1,0 +1,177 @@
+heat_template_version: 2013-05-23
+
+description: Deploy An edX (Birch) Environment
+
+parameters:
+  domain:
+    type: string
+    label: Domain
+    default: cloudtrain.me
+  template_user_data:
+    type: string
+    label: Userdata Template
+    default: |
+      #cloud-config
+      apt_upgrade: true
+      packages:
+        - tmux
+        - htop
+        - multitail
+        - build-essential
+        - software-properties-common
+        - python-software-properties
+        - curl
+        - git-core
+        - libxml2-dev
+        - libxslt1-dev
+        - libfreetype6-dev
+        - python-pip
+        - python-apt
+        - python-dev
+      runcmd:
+        - |
+          pip install --upgrade pip
+          pip install --upgrade virtualenv
+          cd /var/tmp
+          git clone -b release https://github.com/cloud-training/configuration.git
+          cd /var/tmp/configuration
+          git checkout cloud-training-birch
+          /usr/local/bin/pip install -r requirements.txt
+          cd /var/tmp/configuration/playbooks
+          #ansible-playbook -c local ./edx_sandbox.yml -i "localhost," -e "EDXAPP_PREVIEW_LMS_BASE=preview.edx.%prefix%.%domain%  EDXAPP_LMS_BASE=edx.%prefix%.%domain%  EDXAPP_LMS_PREVIEW_NGINX_PORT=80 EDXAPP_CMS_NGINX_PORT=80 EDXAPP_LMS_NGINX_PORT=80 EDXAPP_PLATFORM_NAME='Rackspace Training (%prefix%)'"
+          %swift_signal_notify% --data-binary '{"status": "SUCCESS"}'
+
+resources:
+  password:
+    type: OS::Heat::RandomString
+    properties:
+      length: 12
+      sequence: lettersdigits
+
+  keypair:
+    type: OS::Nova::KeyPair
+    properties:
+      name:
+        str_replace:
+          template: "%prefix%-edx-keypair"
+          params:
+            "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+      save_private_key: True
+
+  network:
+    type: Rackspace::Cloud::Network
+    properties:
+      cidr: 192.168.2.0/24
+      label:
+        str_replace:
+          template: "%prefix%-edx-private"
+          params:
+            "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+
+  swift_signal_handle_app1:
+    type: OS::Heat::SwiftSignalHandle
+
+  server_app1:
+    type: OS::Nova::Server
+    depends_on: [ password, keypair, network, swift_signal_handle_app1 ]
+    properties:
+      name:
+        str_replace:
+          template: "%prefix%-edx-app1"
+          params:
+            "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+      flavor: 8 GB General Purpose v1
+      image: Ubuntu 12.04 LTS (Precise Pangolin) (PVHVM)
+      networks:
+        - uuid: 00000000-0000-0000-0000-000000000000
+        - uuid: 11111111-1111-1111-1111-111111111111
+        - network: { get_resource: network }
+      key_name: { get_resource: keypair }
+      admin_pass: { get_attr: [ password, value ] }
+      config_drive: True
+      user_data_format: RAW
+      user_data:
+        str_replace:
+          template: { get_param: template_user_data }
+          params:
+            "%swift_signal_notify%": { get_attr: [ swift_signal_handle_app1, curl_cli ] }
+            "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+            "%domain%": { get_param: domain }
+
+  dns:
+    type: Rackspace::Cloud::DNS
+    properties:
+      name:
+        str_replace:
+          template: "%prefix%.%domain%"
+          params:
+            "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+            "%domain%": { get_param: domain }
+      emailAddress: ipadmin@stabletransit.com
+      records:
+        - type: A
+          data: { get_attr: [ server_app1, accessIPv4 ] }
+          name:
+            str_replace:
+              template: "edx.%prefix%.%domain%"
+              params:
+                "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+                "%domain%": { get_param: domain }
+        - type: A
+          data: { get_attr: [ server_app1, accessIPv4 ] }
+          name:
+            str_replace:
+              template: "preview.edx.%prefix%.%domain%"
+              params:
+                "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+                "%domain%": { get_param: domain }
+        - type: A
+          data: { get_attr: [ server_app1, accessIPv4 ] }
+          name:
+            str_replace:
+              template: "studio.edx.%prefix%.%domain%"
+              params:
+                "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+                "%domain%": { get_param: domain }
+
+  swift_signal_app1:
+    type: OS::Heat::SwiftSignal
+    properties:
+      handle: { get_resource: swift_signal_handle_app1 }
+      count: 1
+      timeout: 7200
+
+outputs:
+  password:
+    description: Password
+    value: { get_attr: [ password, value ] }
+  public_key:
+    description: Public Key
+    value: { get_attr: [ keypair, public_key ] }
+  private_key:
+    description: Private Key
+    value: { get_attr: [ keypair, private_key ] }
+  url_lms:
+    description: LMS
+    value:
+      str_replace:
+        template: "edx.%prefix%.%domain%"
+        params:
+          "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+          "%domain%": { get_param: domain }
+  url_lms_preview:
+    description: LMS (Preview)
+    value:
+      str_replace:
+        template: "preview.edx.%prefix%.%domain%"
+        params:
+          "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+          "%domain%": { get_param: domain }
+  url_cms:
+    description: CMS
+    value:
+      str_replace:
+        template: "studio.edx.%prefix%.%domain%"
+        params:
+          "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+          "%domain%": { get_param: domain }
