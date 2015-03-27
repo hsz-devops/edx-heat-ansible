@@ -12,6 +12,8 @@ parameters:
     label: Userdata Template
     default: |
       #cloud-config
+      output:
+        all: '| tee -a /var/log/cloud-init-output.log'
       apt_upgrade: true
       packages:
         - tmux
