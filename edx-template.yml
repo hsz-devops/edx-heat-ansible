@@ -70,8 +70,7 @@ resources:
                 set -e
                 set -x
                 function exit_failure {
-                  echo "$@"
-                  %swift_signal_notify% --data-binary '{"status": "FAILURE", "reason": "'"$@"'"}'
+                  %swift_signal_notify% --data-binary '{"status": "FAILURE", "reason": "'"\$@"'"}'
                   exit 1
                 }
                 function exit_success {
