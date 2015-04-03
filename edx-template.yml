@@ -182,7 +182,7 @@ resources:
                 git checkout cloud-training-birch || exit_failure "Git Checkout Failure"
                 /usr/local/bin/pip install -r requirements.txt || exit_failure "PIP Install Requirements Failure"
                 cd /var/tmp/configuration/playbooks
-                #ansible-playbook -c local ./edx_sandbox.yml -i "localhost," -e @/opt/cloud-training/ansible-environment.yml -vv || exit_failure "Ansible Playbook Run Failure"
+                ansible-playbook -c local ./edx_sandbox.yml -i "localhost," -e @/opt/cloud-training/ansible-environment.yml -vv || exit_failure "Ansible Playbook Run Failure"
                 exit_success
                 EOF
               params:
