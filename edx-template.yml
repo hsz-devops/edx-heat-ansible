@@ -118,6 +118,12 @@ resources:
               template: |
                 cat > /opt/cloud-training/ansible-environment.yml << EOF
                 ---
+                edx_platform_version: 'named-release/birch'
+                ora2_version: 'named-release/birch'
+                certs_version: 'named-release/birch'
+                forum_version: 'named-release/birch'
+                xqueue_version: 'named-release/birch'
+                
                 EDXAPP_PREVIEW_LMS_BASE: 'preview.edx.%prefix%.%domain%'
                 EDXAPP_LMS_BASE: 'edx.%prefix%.%domain%'
                 EDXAPP_LMS_PREVIEW_NGINX_PORT: 80
