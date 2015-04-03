@@ -35,12 +35,63 @@ resources:
           params:
             "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
 
+  database:
+    type: OS::Trove::Instance
+    properties:
+      name:
+        str_replace:
+          template: "%prefix%-edx-database"
+          params:
+            "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+      flavor: 1GB Instance
+      size: 5
+      networks:
+        - network: 00000000-0000-0000-0000-000000000000
+        - network: 11111111-1111-1111-1111-111111111111
+        - network: { get_resource: network }
+      datastore_type: "mysql"
+      datastore_version: "5.6"
+      databases:
+        - name: edxapp
+        - name: xqueue
+        - name: ora
+      users:
+        - name: admin
+          password: { get_attr: [ password, value ] }
+          databases:
+            - edxapp
+            - xqueue
+            - ora
+        - name: read_only
+          password: { get_attr: [ password, value ] }
+          databases:
+            - edxapp
+            - xqueue
+            - ora
+        - name: migrate
+          password: { get_attr: [ password, value ] }
+          databases:
+            - edxapp
+            - xqueue
+            - ora
+        - name: edxapp001
+          password: { get_attr: [ password, value ] }
+          databases:
+            - edxapp
+        - name: xqueue001
+          password: { get_attr: [ password, value ] }
+          databases:
+            - xqueue
+        - name: ora001
+          password: { get_attr: [ password, value ] }
+          databases:
+            - ora
+
   swift_signal_handle_app1:
     type: OS::Heat::SwiftSignalHandle
 
   cloud_config_app1:
     type: OS::Heat::CloudConfig
-    depends_on: [ swift_signal_handle_app1 ]
     properties:
       cloud_config:
         output:
@@ -65,6 +116,25 @@ resources:
           - mkdir -p /opt/cloud-training
           - str_replace:
               template: |
+                cat > /opt/cloud-training/ansible-environment.yml << EOF
+                  ---
+                  cloud_training_database_hostname: %database_hostname%
+                  cloud_training_database_password: %database_password%
+                  
+                  EDXAPP_PREVIEW_LMS_BASE: 'preview.edx.%prefix%.%domain%'
+                  EDXAPP_LMS_BASE: 'edx.%prefix%.%domain%'
+                  EDXAPP_LMS_PREVIEW_NGINX_PORT: 80
+                  EDXAPP_CMS_NGINX_PORT: 80
+                  EDXAPP_LMS_NGINX_PORT: 80
+                  EDXAPP_PLATFORM_NAME: 'Rackspace Training (%prefix%)'
+                EOF
+              params:
+                "%database_hostname%": { get_attr: [ database, hostname ] }
+                "%database_password%": { get_attr: [ password, value ] }
+                "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+                "%domain%": { get_param: domain }
+          - str_replace:
+              template: |
                 cat > /opt/cloud-training/runcmd-bash << EOF
                 #!/bin/bash
                 set -e
@@ -84,19 +154,16 @@ resources:
                 git checkout cloud-training-birch || exit_failure "Git Checkout Failure"
                 /usr/local/bin/pip install -r requirements.txt || exit_failure "PIP Install Requirements Failure"
                 cd /var/tmp/configuration/playbooks
-                ansible-playbook -c local ./edx_sandbox.yml -i "localhost," -e "EDXAPP_PREVIEW_LMS_BASE=preview.edx.%prefix%.%domain%  EDXAPP_LMS_BASE=edx.%prefix%.%domain%  EDXAPP_LMS_PREVIEW_NGINX_PORT=80 EDXAPP_CMS_NGINX_PORT=80 EDXAPP_LMS_NGINX_PORT=80 EDXAPP_PLATFORM_NAME='Rackspace Training (%prefix%)'" -vv || exit_failure "Ansible Playbook Run Failure"
+                #ansible-playbook -c local ./edx_sandbox.yml -i "localhost," -e @/opt/cloud-training/ansible-environment.yml -vv || exit_failure "Ansible Playbook Run Failure"
                 exit_success
                 EOF
               params:
                 "%swift_signal_notify%": { get_attr: [ swift_signal_handle_app1, curl_cli ] }
-                "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
-                "%domain%": { get_param: domain }
           - chmod 0700 /opt/cloud-training/runcmd-bash
           - /opt/cloud-training/runcmd-bash
 
   server_app1:
     type: OS::Nova::Server
-    depends_on: [ password, keypair, network, cloud_config_app1 ]
     properties:
       name:
         str_replace:
