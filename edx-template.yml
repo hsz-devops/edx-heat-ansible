@@ -251,9 +251,6 @@ outputs:
   password:
     description: Password
     value: { get_attr: [ password, value ] }
-  public_key:
-    description: Public Key
-    value: { get_attr: [ keypair, public_key ] }
   private_key:
     description: Private Key
     value: { get_attr: [ keypair, private_key ] }
