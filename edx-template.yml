@@ -116,7 +116,36 @@ resources:
           - mkdir -p /opt/cloud-training
           - str_replace:
               template: |
-                cat > /opt/cloud-training/ansible-environment.yml << EOF
+                cat > /opt/cloud-training/id_rsa << EOF
+                %private_key%
+                EOF
+                chmod 0600 /opt/cloud-training/id_rsa
+              params:
+                "%private_key%": { get_attr: [ keypair, private_key ] }
+          - str_replace:
+              template: |
+                cat > /opt/cloud-training/inventory << EOF
+                [all:vars]
+                ansible_ssh_user=root
+                ansible_ssh_private_key_file=/opt/cloud-training/id_rsa
+                heat_stack_prefix=%prefix%
+                heat_stack_id=%heat_stack_id%
+                heat_stack_name=%heat_stack_name%
+                
+                [all]
+                %prefix%-edx-app1    ansible_connection=local
+                
+                [app]
+                %prefix%-edx-app1
+                EOF
+                chmod 0600 /opt/cloud-training/inventory
+              params:
+                "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+                "%heat_stack_id%": { get_param: "OS::stack_id" }
+                "%heat_stack_name%": { get_param: "OS::stack_name" }
+          - str_replace:
+              template: |
+                cat > /opt/cloud-training/environment.yml << EOF
                 ---
                 edx_platform_version: 'named-release/birch'
                 ora2_version: 'named-release/birch'
@@ -124,12 +153,21 @@ resources:
                 forum_version: 'named-release/birch'
                 xqueue_version: 'named-release/birch'
                 
+                migrate_db: 'yes'
+                openid_workaround: True
+                
+                # Not sure about this one.
+                ENABLE_LEGACY_ORA: !!null
+                
+                EDXAPP_PLATFORM_NAME: 'Rackspace Training (%prefix%)'
                 EDXAPP_PREVIEW_LMS_BASE: 'preview.edx.%prefix%.%domain%'
                 EDXAPP_LMS_BASE: 'edx.%prefix%.%domain%'
+                
+                NGINX_SET_X_FORWARDED_HEADERS: True
+                
                 EDXAPP_LMS_PREVIEW_NGINX_PORT: 80
                 EDXAPP_CMS_NGINX_PORT: 80
                 EDXAPP_LMS_NGINX_PORT: 80
-                EDXAPP_PLATFORM_NAME: 'Rackspace Training (%prefix%)'
                 
                 EDXAPP_MYSQL_DB_NAME: 'edxapp'
                 EDXAPP_MYSQL_USER: 'edxapp001'
@@ -156,6 +194,7 @@ resources:
                 COMMON_MYSQL_MIGRATE_USER: 'migrate'
                 COMMON_MYSQL_MIGRATE_PASS: '%database_password%'
                 EOF
+                chmod 0600 /opt/cloud-training/environment.yml
               params:
                 "%database_hostname%": { get_attr: [ database, hostname ] }
                 "%database_password%": { get_attr: [ password, value ] }
@@ -176,18 +215,20 @@ resources:
                 }
                 /usr/bin/pip install --upgrade pip || exit_failure "PIP Upgrade PIP Failure"
                 /usr/local/bin/pip install --upgrade virtualenv || exit_failure "PIP Install Virtual Environment Failure"
+                cd /opt/cloud-training
+                git clone https://github.com/cloud-training/edx-heat-ansible.git || exit_failure "Git Clone Failure"
                 cd /var/tmp
                 git clone -b release https://github.com/cloud-training/configuration.git || exit_failure "Git Clone Failure"
                 cd /var/tmp/configuration
                 git checkout cloud-training-birch || exit_failure "Git Checkout Failure"
                 /usr/local/bin/pip install -r requirements.txt || exit_failure "PIP Install Requirements Failure"
                 cd /var/tmp/configuration/playbooks
-                ansible-playbook -c local ./edx_sandbox.yml -i "localhost," -e @/opt/cloud-training/ansible-environment.yml -vv || exit_failure "Ansible Playbook Run Failure"
+                #ansible-playbook /opt/cloud-training/edx-heat-ansible/edx-playbook.yml -i /opt/cloud-training/inventory -e @/opt/cloud-training/environment.yml -vv || exit_failure "Ansible Playbook Run Failure"
                 exit_success
                 EOF
+                chmod 0700 /opt/cloud-training/runcmd-bash
               params:
                 "%swift_signal_notify%": { get_attr: [ swift_signal_handle_app1, curl_cli ] }
-          - chmod 0700 /opt/cloud-training/runcmd-bash
           - /opt/cloud-training/runcmd-bash
 
   server_app1:

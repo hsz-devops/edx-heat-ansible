@@ -1,0 +1,31 @@
+---
+# This playbook deploys an edX (Birch) Environment
+
+- name: Deploy An edX (Birch) Environment
+  hosts: all
+  sudo: True
+  gather_facts: True
+  roles:
+    - role: nginx
+      nginx_sites:
+      - cms
+      - lms
+      - forum
+      - ora
+      - xqueue
+      nginx_default_sites:
+      - lms
+    - mongo
+    - { role: 'edxapp', celery_worker: True }
+    - edxapp
+    - demo
+    - { role: 'rabbitmq', rabbitmq_ip: '127.0.0.1' }
+    - oraclejdk
+    - elasticsearch
+    - forum
+    - { role: notifier, NOTIFIER_DIGEST_TASK_INTERVAL: "5" }
+    - { role: "xqueue", update_users: True }
+    - role: ora
+      when: ENABLE_LEGACY_ORA
+    - certs
+    - edx_ansible
