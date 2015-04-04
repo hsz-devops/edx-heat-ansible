@@ -5,6 +5,14 @@
   hosts: all
   sudo: True
   gather_facts: True
+  tasks:
+    - name: install memcached
+      apt: pkg=memcached state=present
+
+- name: Deploy An edX (Birch) Environment
+  hosts: all
+  sudo: True
+  gather_facts: True
   roles:
     - role: nginx
       nginx_sites:
