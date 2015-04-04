@@ -7,9 +7,9 @@ parameters:
     type: string
     label: Domain
     default: cloudtrain.me
-  environment_private_email:
+  environment_private:
     type: string
-    label: Email Settings
+    label: Private Settings
     default: ''
 
 resources:
@@ -198,13 +198,13 @@ resources:
                 COMMON_MYSQL_MIGRATE_USER: 'migrate'
                 COMMON_MYSQL_MIGRATE_PASS: '%database_password%'
                 
-                %environment_private_email%
+                %environment_private%
                 EOF
                 chmod 0600 /opt/cloud-training/environment.yml
               params:
                 "%database_hostname%": { get_attr: [ database, hostname ] }
                 "%database_password%": { get_attr: [ password, value ] }
-                "%environment_private_email%": { get_param: environment_private_email }
+                "%environment_private%": { get_param: environment_private }
                 "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
                 "%domain%": { get_param: domain }
           - str_replace:
