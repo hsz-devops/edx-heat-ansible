@@ -4,7 +4,7 @@
 
 ### Private Environment Settings
 
-Some settings should be private, and may be passed in through the use of a Heat Environment file. Below in an example of passing in SMTP credentials.
+Some settings should be private, and may be passed in through the use of a Heat Environment file. Below in an example of passing in SMTP, Memcached and MongoDB settings.
 
 **`edx-environment-private.yml`**
 
