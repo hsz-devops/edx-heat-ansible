@@ -167,6 +167,9 @@ resources:
                 EDXAPP_PREVIEW_LMS_BASE: 'preview.edx.%prefix%.%domain%'
                 EDXAPP_LMS_BASE: 'edx.%prefix%.%domain%'
                 
+                EDXAPP_LMS_SITE_NAME: 'edx.%prefix%.%domain%'
+                EDXAPP_CMS_SITE_NAME: 'studio.edx.%prefix%.%domain%'
+                
                 NGINX_SET_X_FORWARDED_HEADERS: True
                 
                 EDXAPP_LMS_PREVIEW_NGINX_PORT: 80
