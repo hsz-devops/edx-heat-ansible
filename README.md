@@ -16,4 +16,12 @@ parameters:
     EDXAPP_EMAIL_USE_TLS: True
     EDXAPP_EMAIL_HOST_USER: 'user@example.com'
     EDXAPP_EMAIL_HOST_PASSWORD: 'mypassword'
+    
+    EDXAPP_MEMCACHE: [ 'memcached.example.com:11211' ]
+    
+    EDXAPP_MONGO_HOSTS: ['mongo.example.com']
+    EDXAPP_MONGO_PASSWORD: 'mypassword'
+    EDXAPP_MONGO_PORT: 27017
+    EDXAPP_MONGO_USER: 'edxapp'
+    EDXAPP_MONGO_DB_NAME: 'edxapp'
 ```
