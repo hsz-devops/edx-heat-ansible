@@ -207,7 +207,7 @@ resources:
               params:
                 "%database_hostname%": { get_attr: [ database, hostname ] }
                 "%database_password%": { get_attr: [ password, value ] }
-                "%environment_private%": { get_param: environment_private }
+                "%environment%": { get_param: environment }
                 "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
                 "%domain%": { get_param: domain }
           - str_replace:
