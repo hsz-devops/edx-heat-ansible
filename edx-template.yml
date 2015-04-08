@@ -179,15 +179,15 @@ resources:
                 ansible_ssh_private_key_file=/opt/cloud-training/id_rsa_memcached
                 
                 [all]
+                %prefix%-edx-mongo-00    ansible_ssh_host=%mongo_00_ip%
                 %prefix%-edx-mongo-01    ansible_ssh_host=%mongo_01_ip%
                 %prefix%-edx-mongo-02    ansible_ssh_host=%mongo_02_ip%
-                %prefix%-edx-mongo-03    ansible_ssh_host=%mongo_03_ip%
                 %prefix%-edx-memcached    ansible_ssh_host=%memcached_ip%
                 
                 [mongo]
+                %prefix%-edx-mongo-00
                 %prefix%-edx-mongo-01
                 %prefix%-edx-mongo-02
-                %prefix%-edx-mongo-03
                 
                 [memcached]
                 %prefix%-edx-memcached
@@ -199,9 +199,9 @@ resources:
                 "%heat_stack_id%": { get_param: "OS::stack_id" }
                 "%heat_stack_name%": { get_param: "OS::stack_name" }
                 "%memcached_ip%": { get_attr: [ memcached, server_ip ] }
-                "%mongo_01_ip%": { get_attr: [ mongo, server_public_ips, 0 ] }
-                "%mongo_02_ip%": { get_attr: [ mongo, server_public_ips, 1 ] }
-                "%mongo_03_ip%": { get_attr: [ mongo, server_public_ips, 2 ] }
+                "%mongo_00_ip%": { get_attr: [ mongo, server_public_ips, 0 ] }
+                "%mongo_01_ip%": { get_attr: [ mongo, server_public_ips, 1 ] }
+                "%mongo_02_ip%": { get_attr: [ mongo, server_public_ips, 2 ] }
           - str_replace:
               template: |
                 cat > /opt/cloud-training/runcmd-bash << EOF
