@@ -214,6 +214,7 @@ resources:
               template: |
                 cat > /opt/cloud-training/runcmd-bash << EOF
                 #!/bin/bash
+                export HOME="/root"
                 set -e
                 set -x
                 function exit_failure {
