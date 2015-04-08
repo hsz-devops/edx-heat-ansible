@@ -229,7 +229,7 @@ resources:
                 /usr/local/bin/pip install -r requirements.txt || exit_failure "PIP Install Requirements Failure"
                 cd /var/tmp/configuration/playbooks
                 ln -s /opt/cloud-training/edx-heat-ansible/edx-playbook-ansible.yml
-                ansible-playbook edx-playbook-ansible.yml -i /opt/cloud-training/inventory -e @/opt/cloud-training/environment.yml -vv || exit_failure "Ansible Playbook Run Failure"
+                ansible-playbook edx-playbook-ansible.yml -i /opt/cloud-training/inventory -vv || exit_failure "Ansible Playbook Run Failure"
                 exit_success
                 EOF
                 chmod 0700 /opt/cloud-training/runcmd-bash
