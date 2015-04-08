@@ -346,6 +346,10 @@ resources:
                 }
                 /usr/bin/pip install --upgrade pip || exit_failure "PIP Upgrade PIP Failure"
                 /usr/local/bin/pip install --upgrade virtualenv || exit_failure "PIP Install Virtual Environment Failure"
+                cd /opt/cloud-training
+                git clone https://github.com/cloud-training/edx-heat-ansible.git || exit_failure "Git Clone Failure"
+                cd /opt/cloud-training/edx-heat-ansible
+                git checkout master || exit_failure "Git Checkout Failure"
                 cd /var/tmp
                 git clone -b release https://github.com/cloud-training/configuration.git || exit_failure "Git Clone Failure"
                 cd /var/tmp/configuration
@@ -470,6 +474,10 @@ resources:
                 }
                 /usr/bin/pip install --upgrade pip || exit_failure "PIP Upgrade PIP Failure"
                 /usr/local/bin/pip install --upgrade virtualenv || exit_failure "PIP Install Virtual Environment Failure"
+                cd /opt/cloud-training
+                git clone https://github.com/cloud-training/edx-heat-ansible.git || exit_failure "Git Clone Failure"
+                cd /opt/cloud-training/edx-heat-ansible
+                git checkout master || exit_failure "Git Checkout Failure"
                 cd /var/tmp
                 git clone -b release https://github.com/cloud-training/configuration.git || exit_failure "Git Clone Failure"
                 cd /var/tmp/configuration
@@ -594,6 +602,10 @@ resources:
                 }
                 /usr/bin/pip install --upgrade pip || exit_failure "PIP Upgrade PIP Failure"
                 /usr/local/bin/pip install --upgrade virtualenv || exit_failure "PIP Install Virtual Environment Failure"
+                cd /opt/cloud-training
+                git clone https://github.com/cloud-training/edx-heat-ansible.git || exit_failure "Git Clone Failure"
+                cd /opt/cloud-training/edx-heat-ansible
+                git checkout master || exit_failure "Git Checkout Failure"
                 cd /var/tmp
                 git clone -b release https://github.com/cloud-training/configuration.git || exit_failure "Git Clone Failure"
                 cd /var/tmp/configuration
