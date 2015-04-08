@@ -15,7 +15,7 @@
         - python-pymongo
 
     - name: create a mongodb user
-      mongo_user_1.8: database={{ item.database }} name={{ item.user }} password={{ item.password }} roles={{ item.roles }} state=present
+      mongo_user_1.8: database={{ item.database }} name={{ item.user }} password={{ item.password }} roles={{ item.roles }} replica_set=myreplset state=present
       with_items:
         - user: cs_comments_service
           password: password
