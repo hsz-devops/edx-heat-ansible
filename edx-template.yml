@@ -802,6 +802,12 @@ outputs:
   private_key:
     description: Private Key
     value: { get_attr: [ keypair, private_key ] }
+  private_key_memcached:
+    description: Private Key Memcached
+    value: { get_attr: [ memcached, private_key ] }
+  private_key_mongo:
+    description: Private Key Mongo
+    value: { get_attr: [ mongo, private_key ] }
   url_lms:
     description: LMS URL
     value:
