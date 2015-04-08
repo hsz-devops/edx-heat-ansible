@@ -2,33 +2,31 @@
 # This playbook deploys an edX (Birch) Environment
 
 - name: Deploy An edX (Birch) Environment
-  hosts: all
-  sudo: True
-  gather_facts: True
-  tasks:
-    - name: Ping Hosts
-      ping:
-
-- name: Deploy An edX (Birch) Environment
-  hosts: mongo
-  sudo: True
-  gather_facts: True
-  tasks:
-    - name: Ping Hosts
-      ping:
-
-- name: Deploy An edX (Birch) Environment
-  hosts: memcached
-  sudo: True
-  gather_facts: True
-  tasks:
-    - name: Ping Hosts
-      ping:
-        
-- name: Deploy An edX (Birch) Environment
   hosts: mongo[0]
   sudo: True
   gather_facts: True
   tasks:
     - name: Ping Hosts
       ping:
+        
+    - name: PIP Install Required Packages
+      pip: name={{ item }} state=required
+      with_items:
+        - pymongo
+
+    - name: create a mongodb user
+      mongo_user_1.8: >
+        database={{ item.database }}
+        name={{ item.user }}
+        password={{ item.password }}
+        roles={{ item.roles }}
+        state=present
+      with_items:
+        - user: cs_comments_service
+          password: password
+          database: cs_comments_service
+          roles: readWrite
+        - user: edxapp
+          password: password
+          database: edxapp
+          roles: readWrite
