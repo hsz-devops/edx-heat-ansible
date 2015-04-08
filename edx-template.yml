@@ -117,13 +117,13 @@ resources:
   swift_signal_handle_ansible:
     type: OS::Heat::SwiftSignalHandle
 
-  swift_signal_handle_app1:
+  swift_signal_handle_app_01:
     type: OS::Heat::SwiftSignalHandle
 
-  swift_signal_handle_app2:
+  swift_signal_handle_app_02:
     type: OS::Heat::SwiftSignalHandle
 
-  swift_signal_handle_app3:
+  swift_signal_handle_app_03:
     type: OS::Heat::SwiftSignalHandle
 
   cloud_config_ansible:
@@ -237,7 +237,7 @@ resources:
                 "%swift_signal_notify%": { get_attr: [ swift_signal_handle_ansible, curl_cli ] }
           - /opt/cloud-training/runcmd-bash
 
-  cloud_config_app1:
+  cloud_config_app_01:
     type: OS::Heat::CloudConfig
     properties:
       cloud_config:
@@ -355,10 +355,10 @@ resources:
                 EOF
                 chmod 0700 /opt/cloud-training/runcmd-bash
               params:
-                "%swift_signal_notify%": { get_attr: [ swift_signal_handle_app1, curl_cli ] }
+                "%swift_signal_notify%": { get_attr: [ swift_signal_handle_app_01, curl_cli ] }
           - /opt/cloud-training/runcmd-bash
 
-  cloud_config_app2:
+  cloud_config_app_02:
     type: OS::Heat::CloudConfig
     properties:
       cloud_config:
@@ -476,10 +476,10 @@ resources:
                 EOF
                 chmod 0700 /opt/cloud-training/runcmd-bash
               params:
-                "%swift_signal_notify%": { get_attr: [ swift_signal_handle_app2, curl_cli ] }
+                "%swift_signal_notify%": { get_attr: [ swift_signal_handle_app_02, curl_cli ] }
           - /opt/cloud-training/runcmd-bash
 
-  cloud_config_app3:
+  cloud_config_app_03:
     type: OS::Heat::CloudConfig
     properties:
       cloud_config:
@@ -597,7 +597,7 @@ resources:
                 EOF
                 chmod 0700 /opt/cloud-training/runcmd-bash
               params:
-                "%swift_signal_notify%": { get_attr: [ swift_signal_handle_app3, curl_cli ] }
+                "%swift_signal_notify%": { get_attr: [ swift_signal_handle_app_03, curl_cli ] }
           - /opt/cloud-training/runcmd-bash
 
   server_ansible:
@@ -620,13 +620,13 @@ resources:
       user_data_format: RAW
       user_data: { get_resource: cloud_config_ansible }
 
-  server_app1:
+  server_app_01:
     type: OS::Nova::Server
     depends_on: [ swift_signal_ansible ]
     properties:
       name:
         str_replace:
-          template: "%prefix%-edx-app1"
+          template: "%prefix%-edx-app_01"
           params:
             "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
       flavor: 8 GB General Purpose v1
@@ -639,15 +639,15 @@ resources:
       admin_pass: { get_attr: [ password, value ] }
       config_drive: True
       user_data_format: RAW
-      user_data: { get_resource: cloud_config_app1 }
+      user_data: { get_resource: cloud_config_app_01 }
 
-  server_app2:
+  server_app_02:
     type: OS::Nova::Server
     depends_on: [ swift_signal_ansible ]
     properties:
       name:
         str_replace:
-          template: "%prefix%-edx-app2"
+          template: "%prefix%-edx-app_02"
           params:
             "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
       flavor: 8 GB General Purpose v1
@@ -660,15 +660,15 @@ resources:
       admin_pass: { get_attr: [ password, value ] }
       config_drive: True
       user_data_format: RAW
-      user_data: { get_resource: cloud_config_app2 }
+      user_data: { get_resource: cloud_config_app_02 }
 
-  server_app3:
+  server_app_03:
     type: OS::Nova::Server
     depends_on: [ swift_signal_ansible ]
     properties:
       name:
         str_replace:
-          template: "%prefix%-edx-app3"
+          template: "%prefix%-edx-app_03"
           params:
             "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
       flavor: 8 GB General Purpose v1
@@ -681,7 +681,7 @@ resources:
       admin_pass: { get_attr: [ password, value ] }
       config_drive: True
       user_data_format: RAW
-      user_data: { get_resource: cloud_config_app3 }
+      user_data: { get_resource: cloud_config_app_03 }
 
   loadbalancer:
     type: Rackspace::Cloud::LoadBalancer
@@ -693,9 +693,9 @@ resources:
             "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
       nodes:
         - addresses:
-          - { get_attr: [ server_app1, accessIPv4 ] }
-          - { get_attr: [ server_app2, accessIPv4 ] }
-          - { get_attr: [ server_app3, accessIPv4 ] }
+          - { get_attr: [ server_app_01, accessIPv4 ] }
+          - { get_attr: [ server_app_02, accessIPv4 ] }
+          - { get_attr: [ server_app_03, accessIPv4 ] }
           port: 80
       port: 80
       protocol: HTTP
@@ -746,24 +746,24 @@ resources:
       count: 1
       timeout: 7200
 
-  swift_signal_app1:
+  swift_signal_app_01:
     type: OS::Heat::SwiftSignal
     properties:
-      handle: { get_resource: swift_signal_handle_app1 }
+      handle: { get_resource: swift_signal_handle_app_01 }
       count: 1
       timeout: 7200
 
-  swift_signal_app2:
+  swift_signal_app_02:
     type: OS::Heat::SwiftSignal
     properties:
-      handle: { get_resource: swift_signal_handle_app2 }
+      handle: { get_resource: swift_signal_handle_app_02 }
       count: 1
       timeout: 7200
 
-  swift_signal_app3:
+  swift_signal_app_03:
     type: OS::Heat::SwiftSignal
     properties:
-      handle: { get_resource: swift_signal_handle_app3 }
+      handle: { get_resource: swift_signal_handle_app_03 }
       count: 1
       timeout: 7200
 
