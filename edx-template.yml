@@ -7,7 +7,7 @@ parameters:
     type: string
     label: Domain
     default: cloudtrain.me
-  environment_private:
+  environment:
     type: string
     label: Private Settings
     default: ''
@@ -201,7 +201,7 @@ resources:
                 COMMON_MYSQL_MIGRATE_USER: 'migrate'
                 COMMON_MYSQL_MIGRATE_PASS: '%database_password%'
                 
-                %environment_private%
+                %environment%
                 EOF
                 chmod 0600 /opt/cloud-training/environment.yml
               params:
