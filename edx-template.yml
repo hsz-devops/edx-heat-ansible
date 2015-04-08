@@ -723,6 +723,13 @@ resources:
       virtualIps:
         - ipVersion: IPV4
           type: PUBLIC
+      healthMonitor:
+        type: HTTP
+        delay: 10
+        timeout: 5
+        attemptsBeforeDeactivation: 2
+        path: "/"
+        statusRegex: "^[234][0-9][0-9]$"
 
   dns:
     type: Rackspace::Cloud::DNS
