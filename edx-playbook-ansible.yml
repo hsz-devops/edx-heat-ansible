@@ -12,7 +12,12 @@
     - name: Install Required Packages
       apt: name={{ item }} state=present
       with_items:
-        - python-pymongo
+        - build-essential
+        - software-properties-common
+        - python-software-properties
+        - python-pip
+        - python-apt
+        - python-dev
 
     - name: create a mongodb user
       mongo_user_1.8: database={{ item.database }} name={{ item.user }} password={{ item.password }} roles={{ item.roles }} replica_set=myreplset state=present
