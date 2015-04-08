@@ -201,7 +201,7 @@ resources:
                 "%memcached_ip%": { get_attr: [ memcached, server_ip ] }
                 "%mongo_01_ip%": { get_attr: [ mongo, server_public_ips, 0 ] }
                 "%mongo_02_ip%": { get_attr: [ mongo, server_public_ips, 1 ] }
-                "%mongo_02_ip%": { get_attr: [ mongo, server_public_ips, 2 ] }
+                "%mongo_03_ip%": { get_attr: [ mongo, server_public_ips, 2 ] }
           - str_replace:
               template: |
                 cat > /opt/cloud-training/runcmd-bash << EOF
