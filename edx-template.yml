@@ -152,43 +152,115 @@ resources:
           - mkdir -p /opt/cloud-training
           - str_replace:
               template: |
-                cat > /opt/cloud-training/id_rsa << EOF
-                %private_key%
+                cat > /opt/cloud-training/id_rsa_mongo << EOF
+                %mongo_private_key%
                 EOF
-                chmod 0600 /opt/cloud-training/id_rsa
+                cat > /opt/cloud-training/id_rsa_memcached << EOF
+                %memcached_private_key%
+                EOF
+                chmod 0600 /opt/cloud-training/id_rsa_mongo
+                chmod 0600 /opt/cloud-training/id_rsa_memcached
               params:
-                "%private_key%": { get_attr: [ keypair, private_key ] }
+                "%mongo_private_key%": { get_attr: [ mongo, private_key ] }
+                "%memcached_private_key%": { get_attr: [ memcached, private_key ] }
           - str_replace:
               template: |
                 cat > /opt/cloud-training/inventory << EOF
                 [all:vars]
                 ansible_ssh_user=root
-                ansible_ssh_private_key_file=/opt/cloud-training/id_rsa
                 heat_stack_prefix=%prefix%
                 heat_stack_id=%heat_stack_id%
                 heat_stack_name=%heat_stack_name%
                 
+                [mongo:vars]
+                ansible_ssh_private_key_file=/opt/cloud-training/id_rsa_mongo
+                
+                [memcached:vars]
+                ansible_ssh_private_key_file=/opt/cloud-training/id_rsa_memcached
+                
                 [all]
-                %prefix%-edx-app1    ansible_ssh_host=%server_app1_ip%
-                %prefix%-edx-app2    ansible_ssh_host=%server_app2_ip%
-                %prefix%-edx-app3    ansible_ssh_host=%server_app3_ip%
+                %prefix%-edx-mongo-01    ansible_ssh_host=%mongo_01_ip%
+                %prefix%-edx-mongo-02    ansible_ssh_host=%mongo_02_ip%
+                %prefix%-edx-mongo-03    ansible_ssh_host=%mongo_03_ip%
+                %prefix%-edx-memcached    ansible_ssh_host=%memcached_ip%
                 
-                [app]
-                %prefix%-edx-app1
-                %prefix%-edx-app2
-                %prefix%-edx-app3
+                [mongo]
+                %prefix%-edx-mongo-01
+                %prefix%-edx-mongo-02
+                %prefix%-edx-mongo-03
                 
-                [app-first]
-                %prefix%-edx-app1
+                [memcached]
+                %prefix%-edx-memcached
+                
                 EOF
                 chmod 0600 /opt/cloud-training/inventory
               params:
                 "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
                 "%heat_stack_id%": { get_param: "OS::stack_id" }
                 "%heat_stack_name%": { get_param: "OS::stack_name" }
-                "%server_app1_ip%": { get_attr: [ server_app1, accessIPv4 ] }
-                "%server_app2_ip%": { get_attr: [ server_app2, accessIPv4 ] }
-                "%server_app3_ip%": { get_attr: [ server_app3, accessIPv4 ] }
+                "%memcached_ip%": { get_attr: [ memcached, server_ip ] }
+                "%mongo_01_ip%": { get_attr: [ mongo, server_public_ips, 0 ] }
+                "%mongo_02_ip%": { get_attr: [ mongo, server_public_ips, 1 ] }
+                "%mongo_02_ip%": { get_attr: [ mongo, server_public_ips, 2 ] }
+          - str_replace:
+              template: |
+                cat > /opt/cloud-training/runcmd-bash << EOF
+                #!/bin/bash
+                export HOME="/root"
+                set -e
+                set -x
+                function exit_failure {
+                  %swift_signal_notify% --data-binary '{"status": "FAILURE", "reason": "'"\$@"'"}'
+                  exit 1
+                }
+                function exit_success {
+                  %swift_signal_notify% --data-binary '{"status": "SUCCESS"}'
+                }
+                /usr/bin/pip install --upgrade pip || exit_failure "PIP Upgrade PIP Failure"
+                /usr/local/bin/pip install --upgrade virtualenv || exit_failure "PIP Install Virtual Environment Failure"
+                cd /opt/cloud-training
+                git clone https://github.com/cloud-training/edx-heat-ansible.git || exit_failure "Git Clone Failure"
+                cd /opt/cloud-training/edx-heat-ansible
+                git checkout master || exit_failure "Git Checkout Failure"
+                cd /var/tmp
+                git clone -b release https://github.com/cloud-training/configuration.git || exit_failure "Git Clone Failure"
+                cd /var/tmp/configuration
+                git checkout cloud-training-birch || exit_failure "Git Checkout Failure"
+                /usr/local/bin/pip install -r requirements.txt || exit_failure "PIP Install Requirements Failure"
+                cd /var/tmp/configuration/playbooks
+                ln -s /opt/cloud-training/edx-heat-ansible/edx-playbook-ansible.yml
+                ansible-playbook edx-playbook-ansible.yml -i /opt/cloud-training/inventory -vv || exit_failure "Ansible Playbook Run Failure"
+                exit_success
+                EOF
+                chmod 0700 /opt/cloud-training/runcmd-bash
+              params:
+                "%swift_signal_notify%": { get_attr: [ swift_signal_handle_ansible, curl_cli ] }
+          - /opt/cloud-training/runcmd-bash
+
+  cloud_config_app1:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        output:
+          all: '| tee -a /var/log/cloud-init-output.log'
+        apt_upgrade: true
+        packages:
+          - tmux
+          - htop
+          - multitail
+          - build-essential
+          - software-properties-common
+          - python-software-properties
+          - curl
+          - git-core
+          - libxml2-dev
+          - libxslt1-dev
+          - libfreetype6-dev
+          - python-pip
+          - python-apt
+          - python-dev
+        runcmd:
+          - mkdir -p /opt/cloud-training
           - str_replace:
               template: |
                 cat > /opt/cloud-training/environment.yml << EOF
@@ -274,65 +346,6 @@ resources:
                 }
                 /usr/bin/pip install --upgrade pip || exit_failure "PIP Upgrade PIP Failure"
                 /usr/local/bin/pip install --upgrade virtualenv || exit_failure "PIP Install Virtual Environment Failure"
-                cd /opt/cloud-training
-                git clone https://github.com/cloud-training/edx-heat-ansible.git || exit_failure "Git Clone Failure"
-                cd /opt/cloud-training/edx-heat-ansible
-                git checkout master || exit_failure "Git Checkout Failure"
-                cd /var/tmp
-                git clone -b release https://github.com/cloud-training/configuration.git || exit_failure "Git Clone Failure"
-                cd /var/tmp/configuration
-                git checkout cloud-training-birch || exit_failure "Git Checkout Failure"
-                /usr/local/bin/pip install -r requirements.txt || exit_failure "PIP Install Requirements Failure"
-                cd /var/tmp/configuration/playbooks
-                ln -s /opt/cloud-training/edx-heat-ansible/edx-playbook-app.yml
-                ansible-playbook edx-playbook-app.yml -i /opt/cloud-training/inventory -e @/opt/cloud-training/environment.yml -vv || exit_failure "Ansible Playbook Run Failure"
-                exit_success
-                EOF
-                chmod 0700 /opt/cloud-training/runcmd-bash
-              params:
-                "%swift_signal_notify%": { get_attr: [ swift_signal_handle_ansible, curl_cli ] }
-          - /opt/cloud-training/runcmd-bash
-
-  cloud_config_app1:
-    type: OS::Heat::CloudConfig
-    properties:
-      cloud_config:
-        output:
-          all: '| tee -a /var/log/cloud-init-output.log'
-        apt_upgrade: true
-        packages:
-          - tmux
-          - htop
-          - multitail
-          - build-essential
-          - software-properties-common
-          - python-software-properties
-          - curl
-          - git-core
-          - libxml2-dev
-          - libxslt1-dev
-          - libfreetype6-dev
-          - python-pip
-          - python-apt
-          - python-dev
-        runcmd:
-          - mkdir -p /opt/cloud-training
-          - str_replace:
-              template: |
-                cat > /opt/cloud-training/runcmd-bash << EOF
-                #!/bin/bash
-                export HOME="/root"
-                set -e
-                set -x
-                function exit_failure {
-                  %swift_signal_notify% --data-binary '{"status": "FAILURE", "reason": "'"\$@"'"}'
-                  exit 1
-                }
-                function exit_success {
-                  %swift_signal_notify% --data-binary '{"status": "SUCCESS"}'
-                }
-                /usr/bin/pip install --upgrade pip || exit_failure "PIP Upgrade PIP Failure"
-                /usr/local/bin/pip install --upgrade virtualenv || exit_failure "PIP Install Virtual Environment Failure"
                 cd /var/tmp
                 git clone -b release https://github.com/cloud-training/configuration.git || exit_failure "Git Clone Failure"
                 cd /var/tmp/configuration
@@ -369,6 +382,75 @@ resources:
           - python-dev
         runcmd:
           - mkdir -p /opt/cloud-training
+          - str_replace:
+              template: |
+                cat > /opt/cloud-training/environment.yml << EOF
+                ---
+                edx_platform_version: 'named-release/birch'
+                ora2_version: 'named-release/birch'
+                certs_version: 'named-release/birch'
+                forum_version: 'named-release/birch'
+                xqueue_version: 'named-release/birch'
+                
+                migrate_db: 'yes'
+                openid_workaround: True
+                
+                # Not sure about this one.
+                ENABLE_LEGACY_ORA: !!null
+                
+                EDXAPP_PLATFORM_NAME: 'Rackspace Training (%prefix%)'
+                EDXAPP_PREVIEW_LMS_BASE: 'preview.edx.%prefix%.%domain%'
+                EDXAPP_LMS_BASE: 'edx.%prefix%.%domain%'
+                
+                EDXAPP_LMS_SITE_NAME: 'edx.%prefix%.%domain%'
+                EDXAPP_CMS_SITE_NAME: 'studio.edx.%prefix%.%domain%'
+                
+                NGINX_SET_X_FORWARDED_HEADERS: False
+                
+                EDXAPP_LMS_NGINX_PORT: 80
+                EDXAPP_LMS_PREVIEW_NGINX_PORT: 80
+                EDXAPP_CMS_NGINX_PORT: 80
+                
+                EDXAPP_MYSQL_DB_NAME: 'edxapp'
+                EDXAPP_MYSQL_USER: 'edxapp001'
+                EDXAPP_MYSQL_PASSWORD: '%database_password%'
+                EDXAPP_MYSQL_HOST: '%database_hostname%'
+                EDXAPP_MYSQL_PORT: '3306'
+                
+                XQUEUE_MYSQL_DB_NAME: 'xqueue'
+                XQUEUE_MYSQL_USER: 'xqueue001'
+                XQUEUE_MYSQL_PASSWORD: '%database_password%'
+                XQUEUE_MYSQL_HOST: '%database_hostname%'
+                XQUEUE_MYSQL_PORT: '3306'
+                
+                ORA_MYSQL_DB_NAME: 'ora'
+                ORA_MYSQL_USER: 'ora001'
+                ORA_MYSQL_PASSWORD: '%database_password%'
+                ORA_MYSQL_HOST: '%database_hostname%'
+                ORA_MYSQL_PORT: '3306'
+                
+                COMMON_MYSQL_READ_ONLY_USER: 'read_only'
+                COMMON_MYSQL_READ_ONLY_PASS: '%database_password%'
+                COMMON_MYSQL_ADMIN_USER: 'admin'
+                COMMON_MYSQL_ADMIN_PASS: '%database_password%'
+                COMMON_MYSQL_MIGRATE_USER: 'migrate'
+                COMMON_MYSQL_MIGRATE_PASS: '%database_password%'
+                
+                EDXAPP_MEMCACHE: [ '%memcached_ip%:11211' ]
+                EDXAPP_MONGO_HOSTS: %mongo_ips%
+                FORUM_MONGO_HOSTS:  %mongo_ips%
+                
+                %environment%
+                EOF
+                chmod 0600 /opt/cloud-training/environment.yml
+              params:
+                "%database_hostname%": { get_attr: [ database, hostname ] }
+                "%database_password%": { get_attr: [ password, value ] }
+                "%memcached_ip%": { get_attr: [ memcached, server_ip ] }
+                "%mongo_ips%": { "Fn::Join": [ "", [ "[ '", { "Fn::Join": [ "', '", { get_attr: [ mongo, server_public_ips ] } ] } , "' ]" ] ] }
+                "%environment%": { get_param: environment }
+                "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+                "%domain%": { get_param: domain }
           - str_replace:
               template: |
                 cat > /opt/cloud-training/runcmd-bash << EOF
@@ -423,6 +505,75 @@ resources:
           - mkdir -p /opt/cloud-training
           - str_replace:
               template: |
+                cat > /opt/cloud-training/environment.yml << EOF
+                ---
+                edx_platform_version: 'named-release/birch'
+                ora2_version: 'named-release/birch'
+                certs_version: 'named-release/birch'
+                forum_version: 'named-release/birch'
+                xqueue_version: 'named-release/birch'
+                
+                migrate_db: 'yes'
+                openid_workaround: True
+                
+                # Not sure about this one.
+                ENABLE_LEGACY_ORA: !!null
+                
+                EDXAPP_PLATFORM_NAME: 'Rackspace Training (%prefix%)'
+                EDXAPP_PREVIEW_LMS_BASE: 'preview.edx.%prefix%.%domain%'
+                EDXAPP_LMS_BASE: 'edx.%prefix%.%domain%'
+                
+                EDXAPP_LMS_SITE_NAME: 'edx.%prefix%.%domain%'
+                EDXAPP_CMS_SITE_NAME: 'studio.edx.%prefix%.%domain%'
+                
+                NGINX_SET_X_FORWARDED_HEADERS: False
+                
+                EDXAPP_LMS_NGINX_PORT: 80
+                EDXAPP_LMS_PREVIEW_NGINX_PORT: 80
+                EDXAPP_CMS_NGINX_PORT: 80
+                
+                EDXAPP_MYSQL_DB_NAME: 'edxapp'
+                EDXAPP_MYSQL_USER: 'edxapp001'
+                EDXAPP_MYSQL_PASSWORD: '%database_password%'
+                EDXAPP_MYSQL_HOST: '%database_hostname%'
+                EDXAPP_MYSQL_PORT: '3306'
+                
+                XQUEUE_MYSQL_DB_NAME: 'xqueue'
+                XQUEUE_MYSQL_USER: 'xqueue001'
+                XQUEUE_MYSQL_PASSWORD: '%database_password%'
+                XQUEUE_MYSQL_HOST: '%database_hostname%'
+                XQUEUE_MYSQL_PORT: '3306'
+                
+                ORA_MYSQL_DB_NAME: 'ora'
+                ORA_MYSQL_USER: 'ora001'
+                ORA_MYSQL_PASSWORD: '%database_password%'
+                ORA_MYSQL_HOST: '%database_hostname%'
+                ORA_MYSQL_PORT: '3306'
+                
+                COMMON_MYSQL_READ_ONLY_USER: 'read_only'
+                COMMON_MYSQL_READ_ONLY_PASS: '%database_password%'
+                COMMON_MYSQL_ADMIN_USER: 'admin'
+                COMMON_MYSQL_ADMIN_PASS: '%database_password%'
+                COMMON_MYSQL_MIGRATE_USER: 'migrate'
+                COMMON_MYSQL_MIGRATE_PASS: '%database_password%'
+                
+                EDXAPP_MEMCACHE: [ '%memcached_ip%:11211' ]
+                EDXAPP_MONGO_HOSTS: %mongo_ips%
+                FORUM_MONGO_HOSTS:  %mongo_ips%
+                
+                %environment%
+                EOF
+                chmod 0600 /opt/cloud-training/environment.yml
+              params:
+                "%database_hostname%": { get_attr: [ database, hostname ] }
+                "%database_password%": { get_attr: [ password, value ] }
+                "%memcached_ip%": { get_attr: [ memcached, server_ip ] }
+                "%mongo_ips%": { "Fn::Join": [ "", [ "[ '", { "Fn::Join": [ "', '", { get_attr: [ mongo, server_public_ips ] } ] } , "' ]" ] ] }
+                "%environment%": { get_param: environment }
+                "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+                "%domain%": { get_param: domain }
+          - str_replace:
+              template: |
                 cat > /opt/cloud-training/runcmd-bash << EOF
                 #!/bin/bash
                 export HOME="/root"
@@ -451,7 +602,6 @@ resources:
 
   server_ansible:
     type: OS::Nova::Server
-    depends_on: [ swift_signal_app1, swift_signal_app2, swift_signal_app3 ]
     properties:
       name:
         str_replace:
@@ -472,6 +622,7 @@ resources:
 
   server_app1:
     type: OS::Nova::Server
+    depends_on: [ swift_signal_ansible ]
     properties:
       name:
         str_replace:
@@ -492,6 +643,7 @@ resources:
 
   server_app2:
     type: OS::Nova::Server
+    depends_on: [ swift_signal_ansible ]
     properties:
       name:
         str_replace:
@@ -512,6 +664,7 @@ resources:
 
   server_app3:
     type: OS::Nova::Server
+    depends_on: [ swift_signal_ansible ]
     properties:
       name:
         str_replace:

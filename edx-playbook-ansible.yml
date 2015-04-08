@@ -1,0 +1,34 @@
+---
+# This playbook deploys an edX (Birch) Environment
+
+- name: Deploy An edX (Birch) Environment
+  hosts: all
+  sudo: True
+  gather_facts: True
+  tasks:
+    - name: Ping Hosts
+      ping:
+
+- name: Deploy An edX (Birch) Environment
+  hosts: mongo
+  sudo: True
+  gather_facts: True
+  tasks:
+    - name: Ping Hosts
+      ping:
+
+- name: Deploy An edX (Birch) Environment
+  hosts: memcached
+  sudo: True
+  gather_facts: True
+  tasks:
+    - name: Ping Hosts
+      ping:
+        
+- name: Deploy An edX (Birch) Environment
+  hosts: mongo[0]
+  sudo: True
+  gather_facts: True
+  tasks:
+    - name: Ping Hosts
+      ping:
