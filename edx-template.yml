@@ -35,7 +35,7 @@ resources:
       cidr: 192.168.2.0/24
       label:
         str_replace:
-          template: "%prefix%-edx-private"
+          template: "%prefix%-edx-network"
           params:
             "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
 
@@ -90,6 +90,29 @@ resources:
           password: { get_attr: [ password, value ] }
           databases:
             - ora
+
+  mongo:
+    type: https://raw.githubusercontent.com/rackspace-orchestration-templates/mongodb-replset/master/mongodb-replset.yaml
+    properties:
+      server_hostname:
+        str_replace:
+          template: "%prefix%-edx-mongo"
+          params:
+            "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+      image: Ubuntu 12.04 LTS (Precise Pangolin) (PVHVM)
+      flavor: 1 GB General Purpose v1
+      peer_server_count: 3
+
+  memcached:
+    type: https://raw.githubusercontent.com/rackspace-orchestration-templates/memcached/master/memcached.yaml
+    properties:
+      server_hostname:
+        str_replace:
+          template: "%prefix%-edx-memcached"
+          params:
+            "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+      image: Ubuntu 12.04 LTS (Precise Pangolin) (PVHVM)
+      flavor: 1 GB General Purpose v1
 
   swift_signal_handle_ansible:
     type: OS::Heat::SwiftSignalHandle
@@ -220,12 +243,18 @@ resources:
                 COMMON_MYSQL_MIGRATE_USER: 'migrate'
                 COMMON_MYSQL_MIGRATE_PASS: '%database_password%'
                 
+                EDXAPP_MEMCACHE: [ '%memcached_ip%:11211' ]
+                EDXAPP_MONGO_HOSTS: %mongo_ips%
+                FORUM_MONGO_HOSTS:  %mongo_ips%
+                
                 %environment%
                 EOF
                 chmod 0600 /opt/cloud-training/environment.yml
               params:
                 "%database_hostname%": { get_attr: [ database, hostname ] }
                 "%database_password%": { get_attr: [ password, value ] }
+                "%memcached_ip%": { get_attr: [ memcached, server_ip ] }
+                "%mongo_ips%": { "Fn::Join": [ "", [ "[ '", { "Fn::Join": [ "', '", { get_attr: [ mongo, server_public_ips ] } ] } , "' ]" ] ] }
                 "%environment%": { get_param: environment }
                 "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
                 "%domain%": { get_param: domain }
@@ -248,15 +277,15 @@ resources:
                 cd /opt/cloud-training
                 git clone https://github.com/cloud-training/edx-heat-ansible.git || exit_failure "Git Clone Failure"
                 cd /opt/cloud-training/edx-heat-ansible
-                git checkout multi-node || exit_failure "Git Checkout Failure"
+                git checkout master || exit_failure "Git Checkout Failure"
                 cd /var/tmp
                 git clone -b release https://github.com/cloud-training/configuration.git || exit_failure "Git Clone Failure"
                 cd /var/tmp/configuration
                 git checkout cloud-training-birch || exit_failure "Git Checkout Failure"
                 /usr/local/bin/pip install -r requirements.txt || exit_failure "PIP Install Requirements Failure"
                 cd /var/tmp/configuration/playbooks
-                ln -s /opt/cloud-training/edx-heat-ansible/edx-playbook.yml
-                ansible-playbook edx-playbook.yml -i /opt/cloud-training/inventory -e @/opt/cloud-training/environment.yml -vv || exit_failure "Ansible Playbook Run Failure"
+                ln -s /opt/cloud-training/edx-heat-ansible/edx-playbook-app.yml
+                ansible-playbook edx-playbook-app.yml -i /opt/cloud-training/inventory -e @/opt/cloud-training/environment.yml -vv || exit_failure "Ansible Playbook Run Failure"
                 exit_success
                 EOF
                 chmod 0700 /opt/cloud-training/runcmd-bash
