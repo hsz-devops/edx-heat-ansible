@@ -43,3 +43,6 @@
   tasks:
     - name: Ping Hosts
       ping:
+
+    - name: Copy Environment
+      copy: src=/opt/cloud-training/environment.yml dest=/opt/cloud-training/environment.yml owner=root group=root mode=0600
