@@ -64,3 +64,6 @@
 
     - name: PIP Install Required Packages
       pip: requirements=requirements.txt state=present chdir=/var/tmp/configuration
+
+    - name: Symlink Playbook
+      file: path=/var/tmp/configuration/playbooks/edx-playbook-app.yml src=/opt/cloud-training/edx-heat-ansible/edx-playbook-app.yml state=link
