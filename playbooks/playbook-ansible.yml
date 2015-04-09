@@ -26,15 +26,7 @@
 
     - name: create a mongodb user
       mongo_user_1.8: database={{ item.database }} name={{ item.user }} password={{ item.password }} roles={{ item.roles }} replica_set=myreplset state=present
-      with_items:
-        - user: cs_comments_service
-          password: password
-          database: cs_comments_service
-          roles: readWrite
-        - user: edxapp
-          password: password
-          database: edxapp
-          roles: readWrite
+      with_items: MONGO_USERS
 
 - name: Setup edX
   hosts: app
@@ -43,12 +35,6 @@
   tasks:
     - name: Ping Hosts
       ping:
-
-    - name: Create Cloud Training Directory
-      file: path=/opt/cloud-training state=directory owner=root group=root
-
-    - name: Copy Environment
-      copy: src=/opt/cloud-training/environment.yml dest=/opt/cloud-training/environment.yml owner=root group=root mode=0600
 
     - name: PIP Install Required Packages
       pip: name={{ item }} state=latest
@@ -59,14 +45,48 @@
     - name: Clone Repos
       git: repo={{ item.repo }} dest={{ item.dest }} version={{ item.version }} force=yes
       with_items:
-        - { repo: 'https://github.com/cloud-training/edx-heat-ansible.git', dest: '/opt/cloud-training/edx-heat-ansible', version: 'master'}
         - { repo: 'https://github.com/cloud-training/configuration.git',    dest: '/var/tmp/configuration',               version: 'cloud-training-birch'}
 
     - name: PIP Install Required Packages
       pip: requirements=requirements.txt state=present chdir=/var/tmp/configuration
 
-    - name: Symlink Playbook
-      file: path=/var/tmp/configuration/playbooks/playbook-app.yml src=/opt/cloud-training/edx-heat-ansible/playbooks/playbook-app.yml state=link
+- name: Install edX
+  hosts: app
+  sudo: True
+  gather_facts: True
+  roles:
+    - role: nginx
+      nginx_sites:
+      - cms
+      - lms
+      - forum
+      - ora
+      - xqueue
+      nginx_default_sites:
+      - lms
 
-    - name: Run Playbook
-      command: ansible-playbook playbook-app.yml -c local -i "localhost," -e @/opt/cloud-training/environment.yml -e "migrate_db={{ migrate_db }}" -v chdir=/var/tmp/configuration/playbooks
+- name: Install edX (Serial)
+  hosts: app
+  sudo: True
+  gather_facts: True
+  serial: 1
+  roles:
+    - { role: 'edxapp', celery_worker: True }
+    - edxapp
+    - demo
+    - rabbitmq
+
+- name: Install edX
+  hosts: app
+  sudo: True
+  gather_facts: True
+  roles:
+    - oraclejdk
+    - elasticsearch
+    - forum
+    - { role: notifier, NOTIFIER_DIGEST_TASK_INTERVAL: "5" }
+    - { role: "xqueue", update_users: True }
+    - role: ora
+      when: ENABLE_LEGACY_ORA
+    - certs
+    - edx_ansible
