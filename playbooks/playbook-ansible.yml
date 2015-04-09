@@ -19,7 +19,7 @@
         - python-apt
         - python-dev
 
-    - name: PIP Install Reuqired Packages
+    - name: PIP Install Required Packages
       pip: name={{ item }} state=present
       with_items:
         - pymongo
