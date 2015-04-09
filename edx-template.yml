@@ -271,8 +271,18 @@ resources:
                 COMMON_MYSQL_MIGRATE_PASS: '%database_password%'
                 
                 EDXAPP_MEMCACHE: [ '%memcached_ip%:11211' ]
+                
+                EDXAPP_MONGO_DB_NAME: 'edxapp'
+                EDXAPP_MONGO_USER: 'edxapp'
+                EDXAPP_MONGO_PASSWORD: '%mongo_password%'
                 EDXAPP_MONGO_HOSTS: %mongo_ips%
+                EDXAPP_MONGO_PORT: '27017'
+                
+                FORUM_MONGO_DATABASE: 'cs_comments_service'
+                FORUM_MONGO_USER: 'cs_comments_service'
+                FORUM_MONGO_PASSWORD: '%mongo_password%'
                 FORUM_MONGO_HOSTS:  %mongo_ips%
+                FORUM_MONGO_PORT: '27017'
                 
                 %environment_extra%
                 EOF
@@ -281,6 +291,7 @@ resources:
                 "%database_hostname%": { get_attr: [ database, hostname ] }
                 "%database_password%": { get_attr: [ password, value ] }
                 "%memcached_ip%": { get_attr: [ memcached, server_ip ] }
+                "%mongo_password%": { get_attr: [ password, value ] }
                 "%mongo_ips%": { "Fn::Join": [ "", [ "[ '", { "Fn::Join": [ "', '", { get_attr: [ mongo, server_public_ips ] } ] } , "' ]" ] ] }
                 "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
                 "%domain%": { get_param: domain }
