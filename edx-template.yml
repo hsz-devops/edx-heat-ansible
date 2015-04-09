@@ -185,8 +185,8 @@ resources:
                 
                 [all]
                 %prefix%-edx-app-00       ansible_ssh_host=%app_00_ip%    migrate_db=yes
-                %prefix%-edx-app-01       ansible_ssh_host=%app_01_ip%
-                %prefix%-edx-app-02       ansible_ssh_host=%app_02_ip%
+                %prefix%-edx-app-01       ansible_ssh_host=%app_01_ip%    migrate_db=no
+                %prefix%-edx-app-02       ansible_ssh_host=%app_02_ip%    migrate_db=no
                 %prefix%-edx-mongo-00     ansible_ssh_host=%mongo_00_ip%
                 %prefix%-edx-mongo-01     ansible_ssh_host=%mongo_01_ip%
                 %prefix%-edx-mongo-02     ansible_ssh_host=%mongo_02_ip%
@@ -226,7 +226,6 @@ resources:
                 forum_version: 'named-release/birch'
                 xqueue_version: 'named-release/birch'
                 
-                migrate_db: 'no'
                 openid_workaround: True
                 
                 # Not sure about this one.
