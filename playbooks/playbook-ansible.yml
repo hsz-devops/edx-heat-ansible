@@ -50,7 +50,7 @@
     - name: Copy Environment
       copy: src=/opt/cloud-training/environment.yml dest=/opt/cloud-training/environment.yml owner=root group=root mode=0600
 
-    - name: Upgrade PIP
+    - name: PIP Install Required Packages
       pip: name={{ item }} state=latest
       with_items:
         - pip
@@ -61,3 +61,6 @@
       with_items:
         - { repo: 'https://github.com/cloud-training/edx-heat-ansible.git', dest: '/opt/cloud-training/edx-heat-ansible', version: 'master'}
         - { repo: 'https://github.com/cloud-training/configuration.git',    dest: '/var/tmp/configuration',               version: 'cloud-training-birch'}
+
+    - name: PIP Install Required Packages
+      pip: requirements=requirements.txt state=present chdir=/var/tmp/configuration
