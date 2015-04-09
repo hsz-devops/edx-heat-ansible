@@ -226,6 +226,7 @@ resources:
                 forum_version: 'named-release/birch'
                 xqueue_version: 'named-release/birch'
                 
+                migrate_db: 'no'
                 openid_workaround: True
                 
                 # Not sure about this one.
