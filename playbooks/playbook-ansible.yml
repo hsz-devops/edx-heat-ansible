@@ -44,5 +44,8 @@
     - name: Ping Hosts
       ping:
 
+    - name: Create Cloud Training Directory
+      file: path=/opt/cloud-training state=directory owner=root group=root
+
     - name: Copy Environment
       copy: src=/opt/cloud-training/environment.yml dest=/opt/cloud-training/environment.yml owner=root group=root mode=0600
