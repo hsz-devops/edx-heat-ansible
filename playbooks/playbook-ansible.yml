@@ -66,7 +66,7 @@
       pip: requirements=requirements.txt state=present chdir=/var/tmp/configuration
 
     - name: Symlink Playbook
-      file: path=/var/tmp/configuration/playbooks/playbook-app.yml src=/opt/cloud-training/edx-heat-ansible/playbook-app.yml state=link
+      file: path=/var/tmp/configuration/playbooks/playbook-app.yml src=/opt/cloud-training/edx-heat-ansible/playbooks/playbook-app.yml state=link
 
     - name: Run Playbook
       command: ansible-playbook playbook-app.yml -c local -i "localhost," -e @/opt/cloud-training/environment.yml -v chdir=/var/tmp/configuration/playbooks
