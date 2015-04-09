@@ -69,4 +69,4 @@
       file: path=/var/tmp/configuration/playbooks/playbook-app.yml src=/opt/cloud-training/edx-heat-ansible/playbooks/playbook-app.yml state=link
 
     - name: Run Playbook
-      command: ansible-playbook playbook-app.yml -c local -i "localhost," -e @/opt/cloud-training/environment.yml -v chdir=/var/tmp/configuration/playbooks
+      command: ansible-playbook playbook-app.yml -c local -i "localhost," -e @/opt/cloud-training/environment.yml -e "migrate_db={{ migrate_db }}" -v chdir=/var/tmp/configuration/playbooks
