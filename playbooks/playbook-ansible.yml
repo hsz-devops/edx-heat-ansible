@@ -67,3 +67,6 @@
 
     - name: Symlink Playbook
       file: path=/var/tmp/configuration/playbooks/edx-playbook-app.yml src=/opt/cloud-training/edx-heat-ansible/edx-playbook-app.yml state=link
+
+    - name: Run Playbook
+      command: ansible-playbook edx-playbook-app.yml -c local -i "localhost," -e @/opt/cloud-training/environment.yml -v chdir=/var/tmp/configuration/playbooks
