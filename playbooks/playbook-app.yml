@@ -1,7 +1,7 @@
 ---
 # This playbook deploys an edX (Birch) Environment
 
-- name: Deploy An edX (Birch) Environment
+- name: Deploy edX
   hosts: all
   sudo: True
   gather_facts: True
@@ -18,7 +18,7 @@
     - { role: 'edxapp', celery_worker: True }
     - edxapp
     - demo
-    - { role: 'rabbitmq', rabbitmq_ip: '127.0.0.1' }
+    - rabbitmq
     - oraclejdk
     - elasticsearch
     - forum

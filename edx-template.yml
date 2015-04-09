@@ -294,6 +294,9 @@ resources:
                     password: '%mongo_password%'
                     roles: 'readWrite'
                 
+                rabbitmq_clustered_hosts: %rabbitmq_ips%
+                rabbitmq_ip: ''
+                
                 %environment_extra%
                 EOF
                 chmod 0600 /opt/cloud-training/environment.yml
@@ -303,9 +306,10 @@ resources:
                 "%memcached_ip%": { get_attr: [ memcached, server_ip ] }
                 "%mongo_password%": { get_attr: [ password, value ] }
                 "%mongo_ips%": { "Fn::Join": [ "", [ "[ '", { "Fn::Join": [ "', '", { get_attr: [ mongo, server_public_ips ] } ] } , "' ]" ] ] }
+                "%rabbitmq_ips%": { "Fn::Join": [ "", [ "[ 'rabbit@", { "Fn::Join": [ "', 'rabbit@", [ { get_attr: [ server_app_00, accessIPv4 ] }, { get_attr: [ server_app_01, accessIPv4 ] }, { get_attr: [ server_app_02, accessIPv4 ] } ] ] } , "' ]" ] ] }
                 "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
                 "%domain%": { get_param: domain }
-                "%environment_extra%": { get_param: environment_extra }
+                "%environment_extra%": { get_param: environment_extra }                
           - str_replace:
               template: |
                 cat > /opt/cloud-training/runcmd-bash << EOF
