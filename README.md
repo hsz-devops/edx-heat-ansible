@@ -2,7 +2,7 @@
 
 `heat stack-create -f edx-template.yml [-e edx-environment.yml] -t 120 <stack-name>`
 
-### Environment Settings
+### Environment Extra Settings
 
 Some settings should be private, and may be passed in through the use of a Heat Environment file. Below is an example of passing in SMTP settings.
 
