@@ -276,13 +276,13 @@ resources:
                 EDXAPP_MONGO_USER: 'edxapp'
                 EDXAPP_MONGO_PASSWORD: '%mongo_password%'
                 EDXAPP_MONGO_HOSTS: %mongo_ips%
-                EDXAPP_MONGO_PORT: '27017'
+                EDXAPP_MONGO_PORT: 27017
                 
                 FORUM_MONGO_DATABASE: 'cs_comments_service'
                 FORUM_MONGO_USER: 'cs_comments_service'
                 FORUM_MONGO_PASSWORD: '%mongo_password%'
                 FORUM_MONGO_HOSTS:  %mongo_ips%
-                FORUM_MONGO_PORT: '27017'
+                FORUM_MONGO_PORT: 27017
                 
                 MONGO_USERS:
                   - database: 'cs_comments_service'
