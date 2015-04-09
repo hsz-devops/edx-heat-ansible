@@ -7,9 +7,9 @@ parameters:
     type: string
     label: Domain
     default: cloudtrain.me
-  environment:
+  environment_extra:
     type: string
-    label: Private Settings
+    label: Extra Settings
     default: ''
 
 resources:
@@ -216,6 +216,75 @@ resources:
                 "%app_00_ip%": { get_attr: [ server_app_00, accessIPv4 ] }
                 "%app_01_ip%": { get_attr: [ server_app_01, accessIPv4 ] }
                 "%app_02_ip%": { get_attr: [ server_app_02, accessIPv4 ] }
+          - str_replace:
+              template: |
+                cat > /opt/cloud-training/environment.yml << EOF
+                ---
+                edx_platform_version: 'named-release/birch'
+                ora2_version: 'named-release/birch'
+                certs_version: 'named-release/birch'
+                forum_version: 'named-release/birch'
+                xqueue_version: 'named-release/birch'
+                
+                migrate_db: 'yes'
+                openid_workaround: True
+                
+                # Not sure about this one.
+                ENABLE_LEGACY_ORA: !!null
+                
+                EDXAPP_PLATFORM_NAME: 'Rackspace Training (%prefix%)'
+                EDXAPP_PREVIEW_LMS_BASE: 'preview.edx.%prefix%.%domain%'
+                EDXAPP_LMS_BASE: 'edx.%prefix%.%domain%'
+                
+                EDXAPP_LMS_SITE_NAME: 'edx.%prefix%.%domain%'
+                EDXAPP_CMS_SITE_NAME: 'studio.edx.%prefix%.%domain%'
+                
+                NGINX_SET_X_FORWARDED_HEADERS: False
+                
+                EDXAPP_LMS_NGINX_PORT: 80
+                EDXAPP_LMS_PREVIEW_NGINX_PORT: 80
+                EDXAPP_CMS_NGINX_PORT: 80
+                
+                EDXAPP_MYSQL_DB_NAME: 'edxapp'
+                EDXAPP_MYSQL_USER: 'edxapp001'
+                EDXAPP_MYSQL_PASSWORD: '%database_password%'
+                EDXAPP_MYSQL_HOST: '%database_hostname%'
+                EDXAPP_MYSQL_PORT: '3306'
+                
+                XQUEUE_MYSQL_DB_NAME: 'xqueue'
+                XQUEUE_MYSQL_USER: 'xqueue001'
+                XQUEUE_MYSQL_PASSWORD: '%database_password%'
+                XQUEUE_MYSQL_HOST: '%database_hostname%'
+                XQUEUE_MYSQL_PORT: '3306'
+                
+                ORA_MYSQL_DB_NAME: 'ora'
+                ORA_MYSQL_USER: 'ora001'
+                ORA_MYSQL_PASSWORD: '%database_password%'
+                ORA_MYSQL_HOST: '%database_hostname%'
+                ORA_MYSQL_PORT: '3306'
+                
+                COMMON_MYSQL_READ_ONLY_USER: 'read_only'
+                COMMON_MYSQL_READ_ONLY_PASS: '%database_password%'
+                COMMON_MYSQL_ADMIN_USER: 'admin'
+                COMMON_MYSQL_ADMIN_PASS: '%database_password%'
+                COMMON_MYSQL_MIGRATE_USER: 'migrate'
+                COMMON_MYSQL_MIGRATE_PASS: '%database_password%'
+                
+                EDXAPP_MEMCACHE: [ '%memcached_ip%:11211' ]
+                EDXAPP_MONGO_HOSTS: %mongo_ips%
+                FORUM_MONGO_HOSTS:  %mongo_ips%
+                
+                %environment_extra%
+                EOF
+                chmod 0600 /opt/cloud-training/environment.yml
+              params:
+                "%database_hostname%": { get_attr: [ database, hostname ] }
+                "%database_password%": { get_attr: [ password, value ] }
+                "%memcached_ip%": { get_attr: [ memcached, server_ip ] }
+                "%mongo_ips%": { "Fn::Join": [ "", [ "[ '", { "Fn::Join": [ "', '", { get_attr: [ mongo, server_public_ips ] } ] } , "' ]" ] ] }
+                "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+                "%domain%": { get_param: domain }
+                "%environment_extra%": { get_param: environment_extra }
           - str_replace:
               template: |
                 cat > /opt/cloud-training/runcmd-bash << EOF

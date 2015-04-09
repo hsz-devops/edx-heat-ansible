@@ -1,6 +1,6 @@
 # Deploy An edX (Birch) Environment
 
-`heat stack-create -u https://raw.githubusercontent.com/cloud-training/edx-heat-ansible/master/edx-template.yml [-e edx-environment.yml] -t 120 <stack-name>`
+`heat stack-create -f edx-template.yml [-e edx-environment.yml] -t 120 <stack-name>`
 
 ### Environment Settings
 
