@@ -284,6 +284,16 @@ resources:
                 FORUM_MONGO_HOSTS:  %mongo_ips%
                 FORUM_MONGO_PORT: '27017'
                 
+                MONGO_USERS:
+                  - database: 'cs_comments_service'
+                    user: 'cs_comments_service'
+                    password: '%mongo_password%'
+                    roles: 'readWrite'
+                  - database: 'edxapp'
+                    user: 'edxapp'
+                    password: '%mongo_password%'
+                    roles: 'readWrite'
+                
                 %environment_extra%
                 EOF
                 chmod 0600 /opt/cloud-training/environment.yml
