@@ -1,7 +1,7 @@
 ---
 # This playbook deploys an edX (Birch) Environment
 
-- name: Deploy An edX (Birch) Environment
+- name: Setup Mongo
   hosts: mongo[0]
   sudo: True
   gather_facts: True
@@ -35,3 +35,11 @@
           password: password
           database: edxapp
           roles: readWrite
+
+- name: Setup edX
+  hosts: app
+  sudo: True
+  gather_facts: True
+  tasks:
+    - name: Ping Hosts
+      ping:
