@@ -46,6 +46,7 @@
       git: repo={{ item.repo }} dest={{ item.dest }} version={{ item.version }} force=yes
       with_items:
         - { repo: 'https://github.com/cloud-training/configuration.git',    dest: '/var/tmp/configuration',               version: 'cloud-training-birch'}
+        - { repo: 'https://github.com/cloud-training/edx-heat-ansible.git', dest: '/opt/cloud-training/edx-heat-ansible', version: 'master'}
 
     - name: PIP Install Required Packages
       pip: requirements=requirements.txt state=present chdir=/var/tmp/configuration
@@ -54,6 +55,8 @@
   hosts: app
   sudo: True
   gather_facts: True
+  vars_files:
+    - "roles/edxapp/defaults/main.yml"
   roles:
     - role: nginx
       nginx_sites:
