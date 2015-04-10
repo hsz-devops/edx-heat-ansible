@@ -342,7 +342,7 @@ resources:
                 EOF
                 chmod 0700 /opt/cloud-training/runcmd-bash
                 cat >> /etc/rc.local << EOF
-                /opt/cloud-training/runcmd-bash
+                /opt/cloud-training/runcmd-bash >> /opt/cloud-training/runcmd-bash.log 2>> /opt/cloud-training/runcmd-bash.err
                 EOF
               params:
                 "%swift_signal_notify%": { get_attr: [ swift_signal_handle_ansible, curl_cli ] }
