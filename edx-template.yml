@@ -323,7 +323,7 @@ resources:
                 function exit_success {
                   %swift_signal_notify% --data-binary '{"status": "SUCCESS"}'
                 }
-                sed -i 's|/opt/cloud-training/runcmd-bash||' /etc/rc.local
+                sed -i 's|/opt/cloud-training/runcmd-bash|#/opt/cloud-training/runcmd-bash|' /etc/rc.local
                 /usr/bin/pip install --upgrade pip || exit_failure "PIP Upgrade PIP Failure"
                 /usr/local/bin/pip install --upgrade virtualenv || exit_failure "PIP Install Virtual Environment Failure"
                 cd /opt/cloud-training
@@ -341,7 +341,9 @@ resources:
                 exit_success
                 EOF
                 chmod 0700 /opt/cloud-training/runcmd-bash
-                echo "/opt/cloud-training/runcmd-bash" >> /rc.local
+                cat >> /etc/rc.local << EOF
+                /opt/cloud-training/runcmd-bash
+                EOF
               params:
                 "%swift_signal_notify%": { get_attr: [ swift_signal_handle_ansible, curl_cli ] }
           - shutdown -r +1
