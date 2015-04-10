@@ -184,9 +184,9 @@ resources:
                 ansible_ssh_private_key_file=/opt/cloud-training/id_rsa_memcached
                 
                 [all]
-                %prefix%-edx-app-00       ansible_ssh_host=%app_00_ip%    migrate_db=yes
-                %prefix%-edx-app-01       ansible_ssh_host=%app_01_ip%    migrate_db=no
-                %prefix%-edx-app-02       ansible_ssh_host=%app_02_ip%    migrate_db=no
+                %prefix%-edx-app-00       ansible_ssh_host=%app_00_ip%
+                %prefix%-edx-app-01       ansible_ssh_host=%app_01_ip%
+                %prefix%-edx-app-02       ansible_ssh_host=%app_02_ip%
                 %prefix%-edx-mongo-00     ansible_ssh_host=%mongo_00_ip%
                 %prefix%-edx-mongo-01     ansible_ssh_host=%mongo_01_ip%
                 %prefix%-edx-mongo-02     ansible_ssh_host=%mongo_02_ip%

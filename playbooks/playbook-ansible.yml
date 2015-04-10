@@ -51,7 +51,7 @@
     - name: PIP Install Required Packages
       pip: requirements=requirements.txt state=present chdir=/var/tmp/configuration
 
-- name: Install edX
+- name: Install edX - Nginx
   hosts: app
   sudo: True
   gather_facts: True
@@ -71,24 +71,29 @@
       nginx_default_sites:
       - lms
 
-- name: Install edX - app[0]
+- name: Install edX - edX App
   hosts: app[0]
   sudo: True
   gather_facts: True
   roles:
-    - { role: 'edxapp', celery_worker: True }
-    - edxapp
+    - { role: 'edxapp', celery_worker: True, migrate_db: 'yes' }
+    - { role: 'edxapp', migrate_db: 'yes' }
     - demo
-    - rabbitmq
 
-- name: Install edX - app:!app[0] (Serial)
+- name: Install edX
   hosts: app:!app[0]
+  sudo: True
+  gather_facts: True
+  roles:
+    - { role: 'edxapp', celery_worker: True, migrate_db: 'no' }
+    - { role: 'edxapp', migrate_db: 'no' }
+
+- name: Install edX
+  hosts: app
   sudo: True
   gather_facts: True
   serial: 1
   roles:
-    - { role: 'edxapp', celery_worker: True }
-    - edxapp
     - rabbitmq
 
 - name: Install edX
