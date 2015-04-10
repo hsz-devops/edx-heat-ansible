@@ -51,7 +51,7 @@
     - name: PIP Install Required Packages
       pip: requirements=requirements.txt state=present chdir=/var/tmp/configuration
 
-- name: Install edX - Nginx
+- name: Install edX
   hosts: app
   sudo: True
   gather_facts: True
@@ -71,7 +71,7 @@
       nginx_default_sites:
       - lms
 
-- name: Install edX - edX App
+- name: Install edX
   hosts: app[0]
   sudo: True
   gather_facts: True
