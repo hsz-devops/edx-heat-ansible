@@ -59,6 +59,7 @@
     - roles/edxapp/defaults/main.yml
     - roles/forum/defaults/main.yml
     - roles/ora/defaults/main.yml
+    - roles/xqueue/defaults/main.yml
   roles:
     - role: nginx
       nginx_sites:
