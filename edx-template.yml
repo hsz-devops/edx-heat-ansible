@@ -584,28 +584,28 @@ resources:
     properties:
       handle: { get_resource: swift_signal_handle_ansible }
       count: 1
-      timeout: 7200
+      timeout: 10800
 
   swift_signal_app_00:
     type: OS::Heat::SwiftSignal
     properties:
       handle: { get_resource: swift_signal_handle_app_00 }
       count: 1
-      timeout: 7200
+      timeout: 3600
 
   swift_signal_app_01:
     type: OS::Heat::SwiftSignal
     properties:
       handle: { get_resource: swift_signal_handle_app_01 }
       count: 1
-      timeout: 7200
+      timeout: 3600
 
   swift_signal_app_02:
     type: OS::Heat::SwiftSignal
     properties:
       handle: { get_resource: swift_signal_handle_app_02 }
       count: 1
-      timeout: 7200
+      timeout: 3600
 
 outputs:
   password:
