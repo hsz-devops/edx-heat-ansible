@@ -56,7 +56,8 @@
   sudo: True
   gather_facts: True
   vars_files:
-    - "roles/edxapp/defaults/main.yml"
+    - roles/edxapp/defaults/main.yml
+    - roles/forum/defaults/main.yml
   roles:
     - role: nginx
       nginx_sites:
