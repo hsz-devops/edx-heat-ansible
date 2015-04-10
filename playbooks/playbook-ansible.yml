@@ -78,6 +78,10 @@
   roles:
     - { role: 'edxapp', celery_worker: True, migrate_db: 'yes' }
     - { role: 'edxapp', migrate_db: 'yes' }
+    - { role: 'xqueue', update_users: True, migrate_db: 'yes' }
+    - role: ora
+      when: ENABLE_LEGACY_ORA
+      migrate_db: 'yes'
     - demo
 
 - name: Install edX
@@ -87,6 +91,10 @@
   roles:
     - { role: 'edxapp', celery_worker: True, migrate_db: 'no' }
     - { role: 'edxapp', migrate_db: 'no' }
+    - { role: 'xqueue', update_users: True, migrate_db: 'no' }
+    - role: ora
+      when: ENABLE_LEGACY_ORA
+      migrate_db: 'no'
 
 - name: Install edX
   hosts: app
@@ -104,9 +112,6 @@
     - oraclejdk
     - elasticsearch
     - forum
-    - { role: notifier, NOTIFIER_DIGEST_TASK_INTERVAL: "5" }
-    - { role: "xqueue", update_users: True }
-    - role: ora
-      when: ENABLE_LEGACY_ORA
+    - { role: 'notifier', NOTIFIER_DIGEST_TASK_INTERVAL: "5" }
     - certs
     - edx_ansible
