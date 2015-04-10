@@ -71,7 +71,7 @@
       nginx_default_sites:
       - lms
 
-- name: Install edX (Serial)
+- name: Install edX - app[0]
   hosts: app[0]
   sudo: True
   gather_facts: True
@@ -81,7 +81,7 @@
     - demo
     - rabbitmq
 
-- name: Install edX (Serial)
+- name: Install edX - app:!app[0] (Serial)
   hosts: app:!app[0]
   sudo: True
   gather_facts: True
@@ -89,7 +89,6 @@
   roles:
     - { role: 'edxapp', celery_worker: True }
     - edxapp
-    - demo
     - rabbitmq
 
 - name: Install edX
