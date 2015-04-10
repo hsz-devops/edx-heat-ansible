@@ -79,9 +79,7 @@
     - { role: 'edxapp', celery_worker: True, migrate_db: 'yes' }
     - { role: 'edxapp', migrate_db: 'yes' }
     - { role: 'xqueue', update_users: True, migrate_db: 'yes' }
-    - role: ora
-      when: ENABLE_LEGACY_ORA
-      migrate_db: 'yes'
+    - { role: 'ora', migrate_db: 'yes', when: ENABLE_LEGACY_ORA }
     - demo
 
 - name: Install edX
@@ -92,9 +90,7 @@
     - { role: 'edxapp', celery_worker: True, migrate_db: 'no' }
     - { role: 'edxapp', migrate_db: 'no' }
     - { role: 'xqueue', update_users: True, migrate_db: 'no' }
-    - role: ora
-      when: ENABLE_LEGACY_ORA
-      migrate_db: 'no'
+    - { role: 'ora', migrate_db: 'no', when: ENABLE_LEGACY_ORA }
 
 - name: Install edX
   hosts: app
