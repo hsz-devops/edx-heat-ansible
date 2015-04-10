@@ -323,6 +323,7 @@ resources:
                 function exit_success {
                   %swift_signal_notify% --data-binary '{"status": "SUCCESS"}'
                 }
+                sed -i 's|/opt/cloud-training/runcmd-bash||' /etc/rc.local
                 /usr/bin/pip install --upgrade pip || exit_failure "PIP Upgrade PIP Failure"
                 /usr/local/bin/pip install --upgrade virtualenv || exit_failure "PIP Install Virtual Environment Failure"
                 cd /opt/cloud-training
@@ -340,9 +341,10 @@ resources:
                 exit_success
                 EOF
                 chmod 0700 /opt/cloud-training/runcmd-bash
+                echo "/opt/cloud-training/runcmd-bash" >> /rc.local
               params:
                 "%swift_signal_notify%": { get_attr: [ swift_signal_handle_ansible, curl_cli ] }
-          - /opt/cloud-training/runcmd-bash
+          - shutdown -r +1
 
   cloud_config_app_00:
     type: OS::Heat::CloudConfig
