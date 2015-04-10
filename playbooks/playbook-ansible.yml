@@ -72,7 +72,17 @@
       - lms
 
 - name: Install edX (Serial)
-  hosts: app
+  hosts: app[0]
+  sudo: True
+  gather_facts: True
+  roles:
+    - { role: 'edxapp', celery_worker: True }
+    - edxapp
+    - demo
+    - rabbitmq
+
+- name: Install edX (Serial)
+  hosts: app:!app[0]
   sudo: True
   gather_facts: True
   serial: 1
