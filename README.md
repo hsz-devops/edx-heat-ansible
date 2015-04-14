@@ -10,6 +10,8 @@ Some settings should be private, and may be passed in through the use of a Heat 
 
 ```
 parameters:
+  subdomain: edx
+  domain: example.com
   environment: |
     EDXAPP_EMAIL_HOST: 'smtp.example.com'
     EDXAPP_EMAIL_PORT: 587
