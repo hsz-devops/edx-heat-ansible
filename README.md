@@ -1,6 +1,6 @@
 # Deploy An edX (Birch) Environment
 
-`heat stack-create -f edx-template.yml [-e edx-environment.yml] -t 120 <stack-name>`
+`heat stack-create -f edx-template.yml [-e edx-environment.yml] -t 180 <stack-name>`
 
 ### Environment Extra Settings
 
