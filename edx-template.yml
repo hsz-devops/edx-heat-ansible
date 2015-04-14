@@ -3,10 +3,14 @@ heat_template_version: 2013-05-23
 description: Deploy An edX (Birch) Environment
 
 parameters:
+  subdomain:
+    type: string
+    label: Domain
+    default: edx
   domain:
     type: string
     label: Domain
-    default: cloudtrain.me
+    default: example.com
   environment_extra:
     type: string
     label: Extra Settings
@@ -231,12 +235,12 @@ resources:
                 # Not sure about this one.
                 ENABLE_LEGACY_ORA: !!null
                 
-                EDXAPP_PLATFORM_NAME: 'Rackspace Training (%prefix%)'
-                EDXAPP_PREVIEW_LMS_BASE: 'preview.edx.%prefix%.%domain%'
-                EDXAPP_LMS_BASE: 'edx.%prefix%.%domain%'
+                EDXAPP_PLATFORM_NAME: 'Rackspace Training'
+                EDXAPP_PREVIEW_LMS_BASE: 'preview.%subdomain%.%domain%'
+                EDXAPP_LMS_BASE: '%subdomain%.%domain%'
                 
-                EDXAPP_LMS_SITE_NAME: 'edx.%prefix%.%domain%'
-                EDXAPP_CMS_SITE_NAME: 'studio.edx.%prefix%.%domain%'
+                EDXAPP_LMS_SITE_NAME: '%subdomain%.%domain%'
+                EDXAPP_CMS_SITE_NAME: 'studio.%subdomain%.%domain%'
                 
                 NGINX_SET_X_FORWARDED_HEADERS: False
                 
@@ -309,7 +313,7 @@ resources:
                 "%mongo_password%": { get_attr: [ password, value ] }
                 "%mongo_ips%": { "Fn::Join": [ "", [ "[ '", { "Fn::Join": [ "', '", { get_attr: [ mongo, server_public_ips ] } ] } , "' ]" ] ] }
                 "%rabbitmq_ips%": { "Fn::Join": [ "", [ "[ 'rabbit@", { "Fn::Join": [ "', 'rabbit@", [ { get_attr: [ server_app_00, accessIPv4 ] }, { get_attr: [ server_app_01, accessIPv4 ] }, { get_attr: [ server_app_02, accessIPv4 ] } ] ] } , "' ]" ] ] }
-                "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+                "%subdomain%": { get_param: subdomain }
                 "%domain%": { get_param: domain }
                 "%environment_extra%": { get_param: environment_extra }                
           - str_replace:
@@ -326,7 +330,6 @@ resources:
                 function exit_success {
                   %swift_signal_notify% --data-binary '{"status": "SUCCESS"}'
                 }
-                sed -i 's|/opt/cloud-training/runcmd-bash|#/opt/cloud-training/runcmd-bash|' /etc/rc.local
                 /usr/bin/pip install --upgrade pip || exit_failure "PIP Upgrade PIP Failure"
                 /usr/local/bin/pip install --upgrade virtualenv || exit_failure "PIP Install Virtual Environment Failure"
                 cd /opt/cloud-training
@@ -344,12 +347,9 @@ resources:
                 exit_success
                 EOF
                 chmod 0700 /opt/cloud-training/runcmd-bash
-                cat >> /etc/rc.local << EOF
-                /opt/cloud-training/runcmd-bash >> /opt/cloud-training/runcmd-bash.log 2>> /opt/cloud-training/runcmd-bash.err
-                EOF
               params:
                 "%swift_signal_notify%": { get_attr: [ swift_signal_handle_ansible, curl_cli ] }
-          - shutdown -r +1
+          - /opt/cloud-training/runcmd-bash >> /opt/cloud-training/runcmd-bash.log 2>> /opt/cloud-training/runcmd-bash.err
 
   cloud_config_app_00:
     type: OS::Heat::CloudConfig
@@ -551,9 +551,9 @@ resources:
     properties:
       name:
         str_replace:
-          template: "%prefix%.%domain%"
+          template: "%subdomain%.%domain%"
           params:
-            "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+            "%subdomain%": { get_param: subdomain }
             "%domain%": { get_param: domain }
       emailAddress: ipadmin@stabletransit.com
       records:
@@ -561,25 +561,25 @@ resources:
           data: { get_attr: [ loadbalancer, PublicIp ] }
           name:
             str_replace:
-              template: "edx.%prefix%.%domain%"
+              template: "%subdomain%.%domain%"
               params:
-                "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+                "%subdomain%": { get_param: subdomain }
                 "%domain%": { get_param: domain }
         - type: A
           data: { get_attr: [ loadbalancer, PublicIp ] }
           name:
             str_replace:
-              template: "preview.edx.%prefix%.%domain%"
+              template: "preview.%subdomain%.%domain%"
               params:
-                "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+                "%subdomain%": { get_param: subdomain }
                 "%domain%": { get_param: domain }
         - type: A
           data: { get_attr: [ loadbalancer, PublicIp ] }
           name:
             str_replace:
-              template: "studio.edx.%prefix%.%domain%"
+              template: "studio.%subdomain%.%domain%"
               params:
-                "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+                "%subdomain%": { get_param: subdomain }
                 "%domain%": { get_param: domain }
 
   swift_signal_ansible:
@@ -627,23 +627,23 @@ outputs:
     description: LMS URL
     value:
       str_replace:
-        template: "http://edx.%prefix%.%domain%/"
+        template: "http://%subdomain%.%domain%/"
         params:
-          "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+          "%subdomain%": { get_param: subdomain }
           "%domain%": { get_param: domain }
   url_lms_preview:
     description: LMS (Preview) URL
     value:
       str_replace:
-        template: "http://preview.edx.%prefix%.%domain%/"
+        template: "http://preview.%subdomain%.%domain%/"
         params:
-          "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+          "%subdomain%": { get_param: subdomain }
           "%domain%": { get_param: domain }
   url_cms:
     description: CMS URL
     value:
       str_replace:
-        template: "http://studio.edx.%prefix%.%domain%/"
+        template: "http://studio.%subdomain%.%domain%/"
         params:
-          "%prefix%": { "Fn::Select": [ "0", { "Fn::Split" : [ "-", { get_param: "OS::stack_id" } ] } ] }
+          "%subdomain%": { get_param: subdomain }
           "%domain%": { get_param: domain }
